@@ -103,19 +103,20 @@ int main(int argc, char **argv)
       scan_msg.header.stamp = start;
       ++scan_msg.header.seq;
 
-      laser.getData(data);
-
-      for (int i = 0; i < data.dist_len1; i++)
+      if(laser.getData(data))
       {
-        scan_msg.ranges[i] = data.dist1[i] * 0.001;
-      }
+        for (int i = 0; i < data.dist_len1; i++)
+        {
+          scan_msg.ranges[i] = data.dist1[i] * 0.001;
+        }
 
-      for (int i = 0; i < data.rssi_len1; i++)
-      {
-        scan_msg.intensities[i] = data.rssi1[i];
-      }
+        for (int i = 0; i < data.rssi_len1; i++)
+        {
+          scan_msg.intensities[i] = data.rssi1[i];
+        }
 
-      scan_pub.publish(scan_msg);
+        scan_pub.publish(scan_msg);
+      } 
 
       ros::spinOnce();
     }
