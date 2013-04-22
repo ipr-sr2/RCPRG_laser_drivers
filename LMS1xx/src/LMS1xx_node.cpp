@@ -19,8 +19,8 @@ int main(int argc, char **argv)
   std::string host;
   std::string frame_id;
   bool inverted;
-  float resolution;
-  float frequency;
+  double resolution;
+  int frequency;
 
   ros::init(argc, argv, "lms1xx");
   ros::NodeHandle nh;
@@ -34,9 +34,9 @@ int main(int argc, char **argv)
   if(!nh.hasParam("inverted")) ROS_WARN("Used default parameter for inverted");
   n.param<bool>("inverted", inverted, false);
   if(!nh.hasParam("resolution")) ROS_WARN("Used default parameter for resolution");
-  n.param<float>("resolution", resolution, false);
+  n.param<double>("resolution", resolution, 0.5);
   if(!nh.hasParam("frequency")) ROS_WARN("Used default parameter for frequency");
-  n.param<int>("frequency", frequency, false);
+  n.param<int>("frequency", frequency, 25);
 
   ROS_INFO("connecting to laser at : %s", host.c_str());
   // initialize hardware
