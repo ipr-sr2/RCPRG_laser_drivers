@@ -6,6 +6,29 @@
 
 #define DEG2RAD M_PI/180.0
 
+
+// void convertScanToPolar(std::vector<int> viScanRaw,
+//               std::vector<ScanPolarType>& vecScanPolar )
+// { 
+//   double dDist;
+//   double dAngle, dAngleStep;
+//   double dIntens;
+
+//   dAngleStep = fabs(m_Param.dStopAngle - m_Param.dStartAngle) / double(m_Param.iNumScanPoints - 1) ;
+  
+//   for(int i=0; i<m_Param.iNumScanPoints; i++)
+//   {
+//     dDist = double ((viScanRaw[i] & 0x1FFF) * m_Param.dScale);
+
+//     dAngle = m_Param.dStartAngle + i*dAngleStep;
+//     dIntens = double(viScanRaw[i] & 0x2000);
+
+//     vecScanPolar[i].dr = dDist;
+//     vecScanPolar[i].da = dAngle;
+//     vecScanPolar[i].di = dIntens;
+//   }
+// }
+
 int main(int argc, char **argv)
 {
   // laser data
@@ -20,25 +43,29 @@ int main(int argc, char **argv)
   std::string frame_id;
   bool inverted;
   double resolution;
-  int frequency;
+  double frequency;
 
   ros::init(argc, argv, "lms1xx");
   ros::NodeHandle nh;
   ros::NodeHandle n("~");
   ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1);
 
-  if(!nh.hasParam("host")) ROS_WARN("Used default parameter for host");
+  if(!n.hasParam("host")) ROS_WARN("Used default parameter for host");
   n.param<std::string>("host", host, "192.168.1.2");
-  if(!nh.hasParam("frame_id")) ROS_WARN("Used default parameter for frame_id");
+  if(!n.hasParam("frame_id")) ROS_WARN("Used default parameter for frame_id");
   n.param<std::string>("frame_id", frame_id, "/base_laser_link");
-  if(!nh.hasParam("inverted")) ROS_WARN("Used default parameter for inverted");
+  if(!n.hasParam("inverted")) ROS_WARN("Used default parameter for inverted");
   n.param<bool>("inverted", inverted, false);
-  if(!nh.hasParam("resolution")) ROS_WARN("Used default parameter for resolution");
-  n.param<double>("resolution", resolution, 0.5);
-  if(!nh.hasParam("frequency")) ROS_WARN("Used default parameter for frequency");
-  n.param<int>("frequency", frequency, 25);
+  if(!n.hasParam("angle_resolution")) ROS_WARN("Used default parameter for resolution");
+  n.param<double>("angle_resolution", resolution, 0.5);
+  if(!n.hasParam("scan_frequency")) ROS_WARN("Used default parameter for frequency");
+  n.param<double>("scan_frequency", frequency, 25);
 
   ROS_INFO("connecting to laser at : %s", host.c_str());
+  ROS_INFO("using frame_id : %s", frame_id.c_str());
+  ROS_INFO("inverted : %s", (inverted)?"true":"false");
+  ROS_INFO("using res : %f", resolution);
+  ROS_INFO("using freq : %f", frequency);
   // initialize hardware
   laser.connect(host);
 
@@ -62,7 +89,7 @@ int main(int argc, char **argv)
 
     if(cfg.angleResolution != (int)(resolution * 10000))
       ROS_ERROR("Setting angle resolution failed");
-    if(cfg.angleResolution != (int)(frequency * 100))
+    if(cfg.scaningFrequency != (int)(frequency * 100))
       ROS_ERROR("Setting scan frequency failed");
     
     //init scan msg
@@ -110,8 +137,10 @@ int main(int argc, char **argv)
     dataCfg.outputInterval = 1;
 
     laser.setScanDataCfg(dataCfg);
+    ROS_DEBUG("setScanDataCfg");
 
     laser.startMeas();
+    ROS_DEBUG("startMeas");
 
     status_t stat;
     do // wait for ready status
@@ -122,8 +151,10 @@ int main(int argc, char **argv)
     while (stat != ready_for_measurement);
 
     laser.startDevice(); // Log out to properly re-enable system after config
+    ROS_DEBUG("startDevice");
 
     laser.scanContinous(1);
+    ROS_DEBUG("scanContinous true");
 
     while (ros::ok())
     {
@@ -157,8 +188,11 @@ int main(int argc, char **argv)
     }
 
     laser.scanContinous(0);
+    ROS_DEBUG("scanContinous false");
     laser.stopMeas();
+    ROS_DEBUG("stopMeas");
     laser.disconnect();
+    ROS_DEBUG("disconnect");
   }
   else
   {
