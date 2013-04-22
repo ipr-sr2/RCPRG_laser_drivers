@@ -44,6 +44,7 @@ int main(int argc, char **argv)
   bool inverted;
   double resolution;
   double frequency;
+  bool set_config;
 
   ros::init(argc, argv, "lms1xx");
   ros::NodeHandle nh;
@@ -60,6 +61,8 @@ int main(int argc, char **argv)
   n.param<double>("angle_resolution", resolution, 0.5);
   if(!n.hasParam("scan_frequency")) ROS_WARN("Used default parameter for frequency");
   n.param<double>("scan_frequency", frequency, 25);
+  if(!n.hasParam("set_config")) ROS_WARN("Used default parameter for inverted");
+  n.param<bool>("set_config", set_config, false);
 
   ROS_INFO("connecting to laser at : %s", host.c_str());
   ROS_INFO("using frame_id : %s", frame_id.c_str());
@@ -77,13 +80,16 @@ int main(int argc, char **argv)
     laser.login();
     cfg = laser.getScanCfg();
 
-    ROS_DEBUG("Set angle resolution to %f deg",resolution);
-    cfg.angleResolution = (int)(resolution * 10000);
-    ROS_DEBUG("Set scan frequency to %f hz",frequency);
-    cfg.scaningFrequency = (int)(frequency * 100);
+    if(set_config)
+    {
+      ROS_DEBUG("Set angle resolution to %f deg",resolution);
+      cfg.angleResolution = (int)(resolution * 10000);
+      ROS_DEBUG("Set scan frequency to %f hz",frequency);
+      cfg.scaningFrequency = (int)(frequency * 100);
 
-    laser.setScanCfg(cfg);
-    laser.saveConfig();
+      laser.setScanCfg(cfg);
+      laser.saveConfig();
+    }
 
     cfg = laser.getScanCfg();
 
