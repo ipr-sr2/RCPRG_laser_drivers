@@ -18,14 +18,25 @@ int main(int argc, char **argv)
   // parameters
   std::string host;
   std::string frame_id;
+  bool inverted;
+  float resolution;
+  float frequency;
 
   ros::init(argc, argv, "lms1xx");
   ros::NodeHandle nh;
   ros::NodeHandle n("~");
   ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1);
 
+  if(!nh.hasParam("host")) ROS_WARN("Used default parameter for host");
   n.param<std::string>("host", host, "192.168.1.2");
-  n.param<std::string>("frame_id", frame_id, "laser");
+  if(!nh.hasParam("frame_id")) ROS_WARN("Used default parameter for frame_id");
+  n.param<std::string>("frame_id", frame_id, "/base_laser_link");
+  if(!nh.hasParam("inverted")) ROS_WARN("Used default parameter for inverted");
+  n.param<bool>("inverted", inverted, false);
+  if(!nh.hasParam("resolution")) ROS_WARN("Used default parameter for resolution");
+  n.param<float>("resolution", resolution, false);
+  if(!nh.hasParam("frequency")) ROS_WARN("Used default parameter for frequency");
+  n.param<int>("frequency", frequency, false);
 
   ROS_INFO("connecting to laser at : %s", host.c_str());
   // initialize hardware
@@ -35,9 +46,26 @@ int main(int argc, char **argv)
   {
     ROS_INFO("Connected to laser.");
 
+    //setup laserscanner config
     laser.login();
     cfg = laser.getScanCfg();
 
+    ROS_DEBUG("Set angle resolution to %f deg",resolution);
+    cfg.angleResolution = (int)(resolution * 10000);
+    ROS_DEBUG("Set scan frequency to %f hz",frequency);
+    cfg.scaningFrequency = (int)(frequency * 100);
+
+    laser.setScanCfg(cfg);
+    laser.saveConfig();
+
+    cfg = laser.getScanCfg();
+
+    if(cfg.angleResolution != (int)(resolution * 10000))
+      ROS_ERROR("Setting angle resolution failed");
+    if(cfg.angleResolution != (int)(frequency * 100))
+      ROS_ERROR("Setting scan frequency failed");
+    
+    //init scan msg
     scan_msg.header.frame_id = frame_id;
 
     scan_msg.range_min = 0.01;
@@ -48,9 +76,6 @@ int main(int argc, char **argv)
     scan_msg.angle_increment = (double)cfg.angleResolution/10000.0 * DEG2RAD;
     scan_msg.angle_min = (double)cfg.startAngle/10000.0 * DEG2RAD - M_PI/2;
     scan_msg.angle_max = (double)cfg.stopAngle/10000.0 * DEG2RAD - M_PI/2;
-
-    std::cout << "resolution : " << (double)cfg.angleResolution/10000.0 << " deg " << std::endl;
-    std::cout << "frequency : " << (double)cfg.scaningFrequency/100.0 << " Hz " << std::endl;
 
     int num_values;
     if (cfg.angleResolution == 2500)
@@ -72,6 +97,10 @@ int main(int argc, char **argv)
     scan_msg.ranges.resize(num_values);
     scan_msg.intensities.resize(num_values);
 
+    if(inverted)
+      scan_msg.time_increment *= -1.;
+
+    //set scandata config
     dataCfg.outputChannel = 1;
     dataCfg.remission = true;
     dataCfg.resolution = 1;
@@ -107,12 +136,18 @@ int main(int argc, char **argv)
       {
         for (int i = 0; i < data.dist_len1; i++)
         {
-          scan_msg.ranges[i] = data.dist1[i] * 0.001;
+          if(inverted)
+            scan_msg.ranges[i] = data.dist1[data.dist_len1-1-i] * 0.001;
+          else
+            scan_msg.ranges[i] = data.dist1[i] * 0.001;
         }
 
         for (int i = 0; i < data.rssi_len1; i++)
         {
-          scan_msg.intensities[i] = data.rssi1[i];
+          if(inverted)
+            scan_msg.intensities[i] = data.rssi1[data.rssi_len1-1-i];
+          else
+            scan_msg.intensities[i] = data.rssi1[i];
         }
 
         scan_pub.publish(scan_msg);
