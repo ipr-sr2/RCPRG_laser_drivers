@@ -47,9 +47,8 @@ int main(int argc, char **argv)
   bool set_config;
 
   ros::init(argc, argv, "lms1xx");
-  ros::NodeHandle nh;
   ros::NodeHandle n("~");
-  ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1);
+  ros::Publisher scan_pub = n.advertise<sensor_msgs::LaserScan>("scan", 1);
 
   if(!n.hasParam("host")) ROS_WARN("Used default parameter for host");
   n.param<std::string>("host", host, "192.168.1.2");
@@ -61,7 +60,7 @@ int main(int argc, char **argv)
   n.param<double>("angle_resolution", resolution, 0.5);
   if(!n.hasParam("scan_frequency")) ROS_WARN("Used default parameter for frequency");
   n.param<double>("scan_frequency", frequency, 25);
-  if(!n.hasParam("set_config")) ROS_WARN("Used default parameter for inverted");
+  if(!n.hasParam("set_config")) ROS_WARN("Used default parameter for set_config");
   n.param<bool>("set_config", set_config, false);
 
   ROS_INFO("connecting to laser at : %s", host.c_str());
