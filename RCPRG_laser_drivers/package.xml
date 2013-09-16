@@ -1,0 +1,21 @@
+<package>
+  <name>RCPRG_laser_drivers</name>
+  <version>0.1.0</version>
+  <description>
+      RCPRG_laser_drivers
+  </description>
+
+  <maintainer email="todo@todo.todo">Konrad Banachowicz</maintainer>
+  <author email="todo@todo.todo">Konrad Banachowicz</author>
+  <license>GPL,LGPL</license>
+  <url>http://ros.org/wiki/RCPRG_laser_drivers</url>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>libLMS1xx</run_depend>
+  <run_depend>LMS1xx</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>

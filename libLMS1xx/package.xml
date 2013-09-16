@@ -1,0 +1,17 @@
+<package>
+  <name>libLMS1xx</name>
+  <version>0.1.0</version>
+  <description> Library for communicating with SICK LMS1xx. </description>
+  <maintainer email="todo@todo.todo">Konrad Banachowicz</maintainer>
+  <author email="todo@todo.todo">Konrad Banachowicz</author>
+  <license>LGPL</license>
+  <url>http://github.com/konradb3/RCPRG-ros-pkg/wiki/libLMS1xx</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+
+  <run_depend>roscpp</run_depend>
+
+</package>
+
+
